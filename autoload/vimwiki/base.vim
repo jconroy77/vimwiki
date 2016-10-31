@@ -1863,6 +1863,14 @@ function! vimwiki#base#normalize_link_helper(str, rxUrl, rxDesc, template) " {{{
     let descr = s:clean_url(url)
   endif
   let lnk = substitute(template, '__LinkDescription__', '\="'.descr.'"', '')
+
+  let link_infos = vimwiki#base#resolve_link(url)
+  let is_wiki_link = link_infos.scheme =~# '\mwiki\d\+' ||
+        \ link_infos.scheme ==# 'diary'
+  if is_wiki_link && ( url !~ vimwiki#u#escape(VimwikiGet('ext')).'$' )
+    let url = url . VimwikiGet('ext')
+  endif
+
   let lnk = substitute(lnk, '__LinkUrl__', '\="'.url.'"', '')
   return lnk
 endfunction " }}}

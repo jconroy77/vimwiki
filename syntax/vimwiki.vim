@@ -46,67 +46,125 @@ let g:vimwiki_rxWeblinkUrl = g:vimwiki_rxWebProtocols .
 call vimwiki#u#reload_regexes()
 
 " LINKS: setup of larger regexes {{{
+if VimwikiGet('syntax') == 'markdown'
+  let s:ext = VimwikiGet('ext')
 
-" LINKS: setup wikilink regexps {{{
-let s:wikilink_prefix = '[['
-let s:wikilink_suffix = ']]'
-let s:wikilink_separator = '|'
-let s:rx_wikilink_prefix = vimwiki#u#escape(s:wikilink_prefix)
-let s:rx_wikilink_suffix = vimwiki#u#escape(s:wikilink_suffix)
-let s:rx_wikilink_separator = vimwiki#u#escape(s:wikilink_separator)
+  " LINKS: setup wikilink regexps {{{
+  let s:wikilink_prefix = '['
+  let s:wikilink_suffix = ')'
+  let s:wikilink_separator = ']('
+  let s:rx_wikilink_prefix = vimwiki#u#escape(s:wikilink_prefix)
+  let s:rx_wikilink_suffix = vimwiki#u#escape(s:wikilink_suffix)
+  let s:rx_wikilink_separator = vimwiki#u#escape(s:wikilink_separator)
 
-" templates for the creation of wiki links
-" [[URL]]
-let g:vimwiki_WikiLinkTemplate1 = s:wikilink_prefix . '__LinkUrl__'.
-      \ s:wikilink_suffix
-" [[URL|DESCRIPTION]]
-let g:vimwiki_WikiLinkTemplate2 = s:wikilink_prefix . '__LinkUrl__'.
-      \ s:wikilink_separator . '__LinkDescription__' . s:wikilink_suffix
+  " templates for the creation of wiki links
+  " [URL](URL)
+  let g:vimwiki_WikiLinkTemplate1 = s:wikilink_prefix . '__LinkDescription__' .
+        \ s:wikilink_separator . '__LinkUrl__' . s:wikilink_suffix
+  " [DESCRIPTION](URL)
+  let g:vimwiki_WikiLinkTemplate2 = s:wikilink_prefix . '__LinkDescription__' .
+        \ s:wikilink_separator . '__LinkUrl__' . s:wikilink_suffix
 
-" template for matching all wiki links with a given target file
-let g:vimwiki_WikiLinkMatchUrlTemplate =
-      \ s:rx_wikilink_prefix .
-      \ '\zs__LinkUrl__\ze\%(#.*\)\?' .
-      \ s:rx_wikilink_suffix .
-      \ '\|' .
-      \ s:rx_wikilink_prefix .
-      \ '\zs__LinkUrl__\ze\%(#.*\)\?' .
-      \ s:rx_wikilink_separator .
-      \ '.*' .
-      \ s:rx_wikilink_suffix
+  " template for matching all wiki links with a given target file
+  let g:vimwiki_WikiLinkMatchUrlTemplate =
+        \ s:rx_wikilink_prefix .
+        \ '.*' .
+        \ s:rx_wikilink_separator .
+        \ '\zs__LinkUrl__\ze\%(' . vimwiki#u#escape(s:ext) . '\)\?\%(#.*\)\?' .
+        \ s:rx_wikilink_suffix
 
-let s:valid_chars = '[^\\\]]'
-let g:vimwiki_rxWikiLinkUrl = s:valid_chars.'\{-}'
-let g:vimwiki_rxWikiLinkDescr = s:valid_chars.'\{-}'
+  let s:valid_chars = '[^\\\]]'
+  let g:vimwiki_rxWikiLinkUrl = s:valid_chars.'\{-}'
+  let g:vimwiki_rxWikiLinkDescr = s:valid_chars.'\{-}'
 
-" this regexp defines what can form a link when the user presses <CR> in the
-" buffer (and not on a link) to create a link
-" basically, it's Ascii alphanumeric characters plus #|./@-_~ plus all
-" non-Ascii characters
-let g:vimwiki_rxWord = '[^[:blank:]!"$%&''()*+,:;<=>?\[\]\\^`{}]\+'
+  " this regexp defines what can form a link when the user presses <CR> in the
+  " buffer (and not on a link) to create a link
+  " basically, it's Ascii alphanumeric characters plus #|./@-_~ plus all
+  " non-Ascii characters
+  let g:vimwiki_rxWord = '[^[:blank:]!"$%&''()*+,:;<=>?\[\]\\^`{}]\+'
 
 
-" [[URL]], or [[URL|DESCRIPTION]]
-" a) match [[URL|DESCRIPTION]]
-let g:vimwiki_rxWikiLink = s:rx_wikilink_prefix.
-      \ g:vimwiki_rxWikiLinkUrl.'\%('.s:rx_wikilink_separator.
-      \ g:vimwiki_rxWikiLinkDescr.'\)\?'.s:rx_wikilink_suffix
-" b) match URL within [[URL|DESCRIPTION]]
-let g:vimwiki_rxWikiLinkMatchUrl = s:rx_wikilink_prefix.
-      \ '\zs'. g:vimwiki_rxWikiLinkUrl.'\ze\%('. s:rx_wikilink_separator.
-      \ g:vimwiki_rxWikiLinkDescr.'\)\?'.s:rx_wikilink_suffix
-" c) match DESCRIPTION within [[URL|DESCRIPTION]]
-let g:vimwiki_rxWikiLinkMatchDescr = s:rx_wikilink_prefix.
-      \ g:vimwiki_rxWikiLinkUrl.s:rx_wikilink_separator.'\%('.
-      \ '\zs'. g:vimwiki_rxWikiLinkDescr. '\ze\)\?'. s:rx_wikilink_suffix
-" }}}
+  " [[URL]], or [[URL|DESCRIPTION]]
+  " a) match [[URL|DESCRIPTION]]
+  let g:vimwiki_rxWikiLink = s:rx_wikilink_prefix.
+        \ g:vimwiki_rxWikiLinkDescr.s:rx_wikilink_separator.
+        \ g:vimwiki_rxWikiLinkUrl . vimwiki#u#escape(s:ext) . s:rx_wikilink_suffix
+  " b) match URL within [[URL|DESCRIPTION]]
+  let g:vimwiki_rxWikiLinkMatchUrl = s:rx_wikilink_prefix.
+        \ g:vimwiki_rxWikiLinkDescr. s:rx_wikilink_separator.
+        \ '\zs' . g:vimwiki_rxWikiLinkUrl . '\ze' . vimwiki#u#escape(s:ext) . s:rx_wikilink_suffix
+  " c) match DESCRIPTION within [[URL|DESCRIPTION]]
+  let g:vimwiki_rxWikiLinkMatchDescr = s:rx_wikilink_prefix.
+        \ '\zs'. g:vimwiki_rxWikiLinkDescr.'\ze'.s:rx_wikilink_separator.
+        \ g:vimwiki_rxWikiLinkUrl . vimwiki#u#escape(s:ext) . s:rx_wikilink_suffix
+  " }}}
 
-" LINKS: Syntax helper {{{
-let s:rx_wikilink_prefix1 = s:rx_wikilink_prefix . g:vimwiki_rxWikiLinkUrl .
-      \ s:rx_wikilink_separator
-let s:rx_wikilink_suffix1 = s:rx_wikilink_suffix
-" }}}
+  " LINKS: Syntax helper {{{
+  let s:rx_wikilink_prefix1 = s:rx_wikilink_prefix
+  let s:rx_wikilink_suffix1 = s:rx_wikilink_separator . g:vimwiki_rxWikiLinkUrl .
+        \ vimwiki#u#escape(s:ext) . s:rx_wikilink_suffix
+  " }}}
+else
+  " LINKS: setup wikilink regexps {{{
+  let s:wikilink_prefix = '[['
+  let s:wikilink_suffix = ']]'
+  let s:wikilink_separator = '|'
+  let s:rx_wikilink_prefix = vimwiki#u#escape(s:wikilink_prefix)
+  let s:rx_wikilink_suffix = vimwiki#u#escape(s:wikilink_suffix)
+  let s:rx_wikilink_separator = vimwiki#u#escape(s:wikilink_separator)
 
+  " templates for the creation of wiki links
+  " [[URL]]
+  let g:vimwiki_WikiLinkTemplate1 = s:wikilink_prefix . '__LinkUrl__'.
+        \ s:wikilink_suffix
+  " [[URL|DESCRIPTION]]
+  let g:vimwiki_WikiLinkTemplate2 = s:wikilink_prefix . '__LinkUrl__'.
+        \ s:wikilink_separator . '__LinkDescription__' . s:wikilink_suffix
+
+  " template for matching all wiki links with a given target file
+  let g:vimwiki_WikiLinkMatchUrlTemplate =
+        \ s:rx_wikilink_prefix .
+        \ '\zs__LinkUrl__\ze\%(#.*\)\?' .
+        \ s:rx_wikilink_suffix .
+        \ '\|' .
+        \ s:rx_wikilink_prefix .
+        \ '\zs__LinkUrl__\ze\%(#.*\)\?' .
+        \ s:rx_wikilink_separator .
+        \ '.*' .
+        \ s:rx_wikilink_suffix
+
+  let s:valid_chars = '[^\\\]]'
+  let g:vimwiki_rxWikiLinkUrl = s:valid_chars.'\{-}'
+  let g:vimwiki_rxWikiLinkDescr = s:valid_chars.'\{-}'
+
+  " this regexp defines what can form a link when the user presses <CR> in the
+  " buffer (and not on a link) to create a link
+  " basically, it's Ascii alphanumeric characters plus #|./@-_~ plus all
+  " non-Ascii characters
+  let g:vimwiki_rxWord = '[^[:blank:]!"$%&''()*+,:;<=>?\[\]\\^`{}]\+'
+
+
+  " [[URL]], or [[URL|DESCRIPTION]]
+  " a) match [[URL|DESCRIPTION]]
+  let g:vimwiki_rxWikiLink = s:rx_wikilink_prefix.
+        \ g:vimwiki_rxWikiLinkUrl.'\%('.s:rx_wikilink_separator.
+        \ g:vimwiki_rxWikiLinkDescr.'\)\?'.s:rx_wikilink_suffix
+  " b) match URL within [[URL|DESCRIPTION]]
+  let g:vimwiki_rxWikiLinkMatchUrl = s:rx_wikilink_prefix.
+        \ '\zs'. g:vimwiki_rxWikiLinkUrl.'\ze\%('. s:rx_wikilink_separator.
+        \ g:vimwiki_rxWikiLinkDescr.'\)\?'.s:rx_wikilink_suffix
+  " c) match DESCRIPTION within [[URL|DESCRIPTION]]
+  let g:vimwiki_rxWikiLinkMatchDescr = s:rx_wikilink_prefix.
+        \ g:vimwiki_rxWikiLinkUrl.s:rx_wikilink_separator.'\%('.
+        \ '\zs'. g:vimwiki_rxWikiLinkDescr. '\ze\)\?'. s:rx_wikilink_suffix
+  " }}}
+
+  " LINKS: Syntax helper {{{
+  let s:rx_wikilink_prefix1 = s:rx_wikilink_prefix . g:vimwiki_rxWikiLinkUrl .
+        \ s:rx_wikilink_separator
+  let s:rx_wikilink_suffix1 = s:rx_wikilink_suffix
+  " }}}
+endif
 
 " LINKS: setup of wikiincl regexps {{{
 let g:vimwiki_rxWikiInclPrefix = '{{'

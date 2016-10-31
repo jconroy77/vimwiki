@@ -194,7 +194,16 @@ function! s:normalize_link_syntax_v() " {{{
   try
     norm! gvy
     let visual_selection = @"
-    let link = substitute(g:vimwiki_Weblink1Template, '__LinkUrl__', '\='."'".visual_selection."'", '')
+
+    let link_infos = vimwiki#base#resolve_link(visual_selection)
+    let is_wiki_link = link_infos.scheme =~# '\mwiki\d\+' ||
+          \ link_infos.scheme ==# 'diary'
+    if is_wiki_link && ( visual_selection !~ vimwiki#u#escape(VimwikiGet('ext')).'$' )
+      let link = substitute(g:vimwiki_Weblink1Template, '__LinkUrl__', '\=' . "'" . visual_selection . VimwikiGet('ext') . "'", '')
+    else
+      let link = substitute(g:vimwiki_Weblink1Template, '__LinkUrl__', '\='."'".visual_selection."'", '')
+    endif
+
     let link = substitute(link, '__LinkDescription__', '\='."'".visual_selection."'", '')
 
     call setreg('"', link, 'v')

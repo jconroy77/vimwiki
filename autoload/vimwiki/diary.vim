@@ -129,6 +129,8 @@ endfunction "}}}
 function! s:format_diary() "{{{
   let result = []
 
+  let ext = VimwikiGet('ext')
+
   let g_files = s:group_links(s:get_diary_links())
 
   for year in s:sort(keys(g_files))
@@ -141,11 +143,11 @@ function! s:format_diary() "{{{
 
       for [fl, cap] in s:sort(items(g_files[year][month]))
         if empty(cap)
-          let entry = substitute(g:vimwiki_WikiLinkTemplate1, '__LinkUrl__', fl, '')
-          let entry = substitute(entry, '__LinkDescription__', cap, '')
+          let entry = substitute(g:vimwiki_WikiLinkTemplate1, '__LinkUrl__', fl.ext, '')
+          let entry = substitute(entry, '__LinkDescription__', fl, '')
           call add(result, repeat(' ', &sw).'* '.entry)
         else
-          let entry = substitute(g:vimwiki_WikiLinkTemplate2, '__LinkUrl__', fl, '')
+          let entry = substitute(g:vimwiki_WikiLinkTemplate2, '__LinkUrl__', fl.ext, '')
           let entry = substitute(entry, '__LinkDescription__', cap, '')
           call add(result, repeat(' ', &sw).'* '.entry)
         endif
